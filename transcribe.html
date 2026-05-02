@@ -211,24 +211,98 @@
     fileInput.value = '';
   });
 
-  async function extractAudio(file) {
-    setStatus('音声データを読み込み中...', 5);
-    const arrayBuffer = await file.arrayBuffer();
-
-    const ctx = new AudioContext();
-    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-    await ctx.close();
-
-    setStatus('音声データを変換中...', 15);
+  async function resampleTo16k(audioBuffer) {
     const sampleRate = 16000;
     const offCtx = new OfflineAudioContext(1, Math.ceil(audioBuffer.duration * sampleRate), sampleRate);
     const src = offCtx.createBufferSource();
     src.buffer = audioBuffer;
     src.connect(offCtx.destination);
     src.start(0);
-
     const resampled = await offCtx.startRendering();
     return resampled.getChannelData(0);
+  }
+
+  async function extractAudio(file) {
+    setStatus('音声データを読み込み中...', 5);
+
+    // まず直接デコードを試みる（音声ファイル向け）
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const ctx = new AudioContext();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      await ctx.close();
+      setStatus('音声データを変換中...', 15);
+      return await resampleTo16k(audioBuffer);
+    } catch {
+      // 失敗した場合は動画要素経由で抽出（スマホ動画向け）
+    }
+
+    setStatus('動画から音声を抽出中... (動画の長さ分かかります)', 8);
+    return await extractAudioViaVideo(file);
+  }
+
+  function extractAudioViaVideo(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.src = url;
+      video.volume = 0;
+      video.style.display = 'none';
+      document.body.appendChild(video);
+
+      const chunks = [];
+      let audioCtx, processor;
+
+      video.addEventListener('loadedmetadata', () => {
+        audioCtx = new AudioContext();
+        const source = audioCtx.createMediaElementSource(video);
+        processor = audioCtx.createScriptProcessor(4096, 1, 1);
+
+        processor.onaudioprocess = e => {
+          chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+        };
+
+        // 進行状況を動画の再生位置で更新
+        video.addEventListener('timeupdate', () => {
+          if (video.duration) {
+            const pct = Math.round((video.currentTime / video.duration) * 20);
+            setStatus(`動画から音声を抽出中... ${Math.round(video.currentTime / video.duration * 100)}%`, 8 + pct);
+          }
+        });
+
+        source.connect(processor);
+        processor.connect(audioCtx.destination);
+        video.play().catch(reject);
+      });
+
+      video.addEventListener('ended', async () => {
+        processor.disconnect();
+        const nativeSampleRate = audioCtx.sampleRate;
+        await audioCtx.close();
+        document.body.removeChild(video);
+        URL.revokeObjectURL(url);
+
+        const totalLength = chunks.reduce((acc, c) => acc + c.length, 0);
+        const raw = new Float32Array(totalLength);
+        let offset = 0;
+        for (const c of chunks) { raw.set(c, offset); offset += c.length; }
+
+        if (nativeSampleRate === 16000) { resolve(raw); return; }
+
+        setStatus('音声データを変換中...', 28);
+        const offCtx = new OfflineAudioContext(1, Math.ceil(totalLength * 16000 / nativeSampleRate), 16000);
+        const buffer = offCtx.createBuffer(1, totalLength, nativeSampleRate);
+        buffer.copyToChannel(raw, 0);
+        const src = offCtx.createBufferSource();
+        src.buffer = buffer;
+        src.connect(offCtx.destination);
+        src.start(0);
+        const resampled = await offCtx.startRendering();
+        resolve(resampled.getChannelData(0));
+      });
+
+      video.onerror = () => reject(new Error('動画ファイルを読み込めませんでした'));
+    });
   }
 
   async function loadModel() {
