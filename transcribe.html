@@ -185,22 +185,23 @@
     if (pct != null) progressFill.style.width = pct + '%';
   }
 
-  // ブラウザがファイルを直接開くのを防ぐ
-  document.addEventListener('dragover', e => e.preventDefault());
-  document.addEventListener('drop', e => e.preventDefault());
-
-  // File select
+  // File select（クリック）
   uploadArea.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', e => { if (e.target.files[0]) start(e.target.files[0]); });
 
-  // Drag & drop
-  uploadArea.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); uploadArea.classList.add('drag-over'); });
-  uploadArea.addEventListener('dragleave', e => { e.stopPropagation(); uploadArea.classList.remove('drag-over'); });
-  uploadArea.addEventListener('drop', e => {
+  // ページ全体をドロップゾーンにしてブラウザの動画表示を完全に防ぐ
+  document.addEventListener('dragenter', e => e.preventDefault());
+  document.addEventListener('dragover', e => {
     e.preventDefault();
-    e.stopPropagation();
+    if (uploadView.style.display !== 'none') uploadArea.classList.add('drag-over');
+  });
+  document.addEventListener('dragleave', e => {
+    if (!e.relatedTarget) uploadArea.classList.remove('drag-over');
+  });
+  document.addEventListener('drop', e => {
+    e.preventDefault();
     uploadArea.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
+    const file = e.dataTransfer?.files[0];
     if (file) start(file);
   });
 
