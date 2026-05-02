@@ -311,14 +311,17 @@
     });
   }
 
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const modelName = isMobile ? 'Xenova/whisper-tiny' : 'Xenova/whisper-small';
+
   async function loadModel() {
     if (transcriber) return;
 
-    setStatus('AIモデルをダウンロード中... (初回のみ・数分かかります) 0%', 1);
+    setStatus(`AIモデルをダウンロード中... 0% (初回のみ・数分かかります)`, 1);
 
     transcriber = await pipeline(
       'automatic-speech-recognition',
-      'Xenova/whisper-small',
+      modelName,
       {
         progress_callback(p) {
           if (p.status === 'downloading') {
