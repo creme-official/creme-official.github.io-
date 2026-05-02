@@ -339,15 +339,15 @@
 
     try {
       await loadModel();
-      const audio = await extractAudio(file);
 
       setStatus('文字起こし中...', 35);
       show(liveLabel);
       show(liveText);
 
+      const url = URL.createObjectURL(file);
       let accumulated = '';
 
-      const result = await transcriber(audio, {
+      const result = await transcriber(url, {
         language: 'japanese',
         task: 'transcribe',
         chunk_length_s: 30,
@@ -365,6 +365,7 @@
         }
       });
 
+      URL.revokeObjectURL(url);
       setStatus('完了！', 100);
 
       setTimeout(() => {
