@@ -51,7 +51,7 @@
 
     /* Processing */
     #processingView { display: none; }
-    .status-text { font-size: 14px; color: #666; margin-bottom: 10px; }
+    .status-text { font-size: 15px; color: #444; margin-bottom: 10px; font-weight: bold; }
     .progress-bar { background: #eee; border-radius: 100px; height: 6px; overflow: hidden; margin-bottom: 24px; }
     .progress-fill { background: #9f8a60; height: 100%; border-radius: 100px; transition: width 0.4s ease; width: 0%; }
 
@@ -185,17 +185,23 @@
     if (pct != null) progressFill.style.width = pct + '%';
   }
 
+  // ブラウザがファイルを直接開くのを防ぐ
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop', e => e.preventDefault());
+
   // File select
   uploadArea.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', e => { if (e.target.files[0]) start(e.target.files[0]); });
 
   // Drag & drop
-  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
-  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); uploadArea.classList.add('drag-over'); });
+  uploadArea.addEventListener('dragleave', e => { e.stopPropagation(); uploadArea.classList.remove('drag-over'); });
   uploadArea.addEventListener('drop', e => {
     e.preventDefault();
+    e.stopPropagation();
     uploadArea.classList.remove('drag-over');
-    if (e.dataTransfer.files[0]) start(e.dataTransfer.files[0]);
+    const file = e.dataTransfer.files[0];
+    if (file) start(file);
   });
 
   copyBtn.addEventListener('click', () => {
