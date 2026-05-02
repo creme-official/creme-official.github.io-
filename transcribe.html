@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>動画文字起こし | Creme合同会社</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: #f0ede8;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 680px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+
+    .header { margin-bottom: 32px; }
+    .header h1 { font-size: 22px; color: #9f8a60; font-weight: bold; margin-bottom: 6px; }
+    .header p { font-size: 13px; color: #888; }
+
+    /* Upload */
+    .upload-area {
+      border: 2px dashed #d5cfc5;
+      border-radius: 10px;
+      padding: 48px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .upload-area:hover, .upload-area.drag-over {
+      border-color: #9f8a60;
+      background: #faf8f5;
+    }
+    .upload-area input { display: none; }
+    .upload-icon { font-size: 40px; margin-bottom: 14px; }
+    .upload-text { font-size: 15px; color: #444; margin-bottom: 6px; }
+    .upload-subtext { font-size: 12px; color: #aaa; }
+
+    /* Processing */
+    #processingView { display: none; }
+    .status-text { font-size: 14px; color: #666; margin-bottom: 10px; }
+    .progress-bar { background: #eee; border-radius: 100px; height: 6px; overflow: hidden; margin-bottom: 24px; }
+    .progress-fill { background: #9f8a60; height: 100%; border-radius: 100px; transition: width 0.4s ease; width: 0%; }
+
+    /* Live preview */
+    .live-label { font-size: 12px; color: #aaa; margin-bottom: 8px; }
+    .live-text {
+      background: #fafaf8;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.9;
+      min-height: 80px;
+      color: #555;
+      white-space: pre-wrap;
+    }
+
+    /* Result */
+    #resultView { display: none; }
+    .result-label { font-size: 13px; color: #888; margin-bottom: 8px; }
+    .result-text {
+      background: #fafaf8;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 15px;
+      line-height: 1.9;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .btn {
+      padding: 10px 22px;
+      border-radius: 6px;
+      border: none;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .btn-primary { background: #9f8a60; color: #fff; }
+    .btn-primary:hover { background: #8a7650; }
+    .btn-secondary { background: #eee; color: #555; }
+    .btn-secondary:hover { background: #ddd; }
+
+    /* Error */
+    .error-text { color: #c0392b; font-size: 14px; margin-top: 12px; }
+
+    /* Note */
+    .note {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #bbb;
+      line-height: 1.7;
+      border-top: 1px solid #f0ede8;
+      padding-top: 16px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>動画文字起こし</h1>
+    <p>動画・音声ファイルをアップロードするとテキストに変換します</p>
+  </div>
+
+  <!-- Step 1: Upload -->
+  <div id="uploadView">
+    <div class="upload-area" id="uploadArea">
+      <input type="file" id="fileInput" accept="video/*,audio/*">
+      <div class="upload-icon">🎬</div>
+      <p class="upload-text">クリックまたはドラッグ＆ドロップ</p>
+      <p class="upload-subtext">MP4 / MOV / MP3 / WAV などに対応</p>
+    </div>
+    <p class="note">
+      ※ 初回のみAIモデル（約150MB）のダウンロードが必要です。2回目以降はすぐ使えます。<br>
+      ※ ファイルは外部に送信されません。すべてブラウザ内で処理されます。
+    </p>
+  </div>
+
+  <!-- Step 2: Processing -->
+  <div id="processingView">
+    <p class="status-text" id="statusText">準備中...</p>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p class="live-label" id="liveLabel" style="display:none">変換中のテキスト（リアルタイム表示）</p>
+    <div class="live-text" id="liveText" style="display:none"></div>
+    <p class="error-text" id="errorText" style="display:none"></p>
+  </div>
+
+  <!-- Step 3: Result -->
+  <div id="resultView">
+    <p class="result-label">文字起こし結果</p>
+    <div class="result-text" id="resultText"></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="copyBtn">テキストをコピー</button>
+      <button class="btn btn-secondary" id="resetBtn">別のファイルを使う</button>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2';
+
+  env.allowLocalModels = false;
+
+  const uploadView     = document.getElementById('uploadView');
+  const processingView = document.getElementById('processingView');
+  const resultView     = document.getElementById('resultView');
+  const uploadArea     = document.getElementById('uploadArea');
+  const fileInput      = document.getElementById('fileInput');
+  const statusText     = document.getElementById('statusText');
+  const progressFill   = document.getElementById('progressFill');
+  const liveLabel      = document.getElementById('liveLabel');
+  const liveText       = document.getElementById('liveText');
+  const errorText      = document.getElementById('errorText');
+  const resultText     = document.getElementById('resultText');
+  const copyBtn        = document.getElementById('copyBtn');
+  const resetBtn       = document.getElementById('resetBtn');
+
+  let transcriber = null;
+
+  function show(el)  { el.style.display = 'block'; }
+  function hide(el)  { el.style.display = 'none'; }
+
+  function setStatus(text, pct) {
+    statusText.textContent = text;
+    if (pct != null) progressFill.style.width = pct + '%';
+  }
+
+  // File select
+  uploadArea.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) start(e.target.files[0]); });
+
+  // Drag & drop
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadArea.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) start(e.dataTransfer.files[0]);
+  });
+
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(resultText.textContent);
+    copyBtn.textContent = 'コピーしました！';
+    setTimeout(() => { copyBtn.textContent = 'テキストをコピー'; }, 2000);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    hide(resultView);
+    hide(processingView);
+    show(uploadView);
+    fileInput.value = '';
+  });
+
+  async function extractAudio(file) {
+    setStatus('音声データを読み込み中...', 5);
+    const arrayBuffer = await file.arrayBuffer();
+
+    const ctx = new AudioContext();
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    await ctx.close();
+
+    setStatus('音声データを変換中...', 15);
+    const sampleRate = 16000;
+    const offCtx = new OfflineAudioContext(1, Math.ceil(audioBuffer.duration * sampleRate), sampleRate);
+    const src = offCtx.createBufferSource();
+    src.buffer = audioBuffer;
+    src.connect(offCtx.destination);
+    src.start(0);
+
+    const resampled = await offCtx.startRendering();
+    return resampled.getChannelData(0);
+  }
+
+  async function loadModel() {
+    if (transcriber) return;
+
+    setStatus('AIモデルを読み込み中... (初回は数分かかります)', 0);
+
+    transcriber = await pipeline(
+      'automatic-speech-recognition',
+      'Xenova/whisper-small',
+      {
+        progress_callback(p) {
+          if (p.status === 'downloading') {
+            const pct = Math.round(p.progress ?? 0);
+            setStatus(`AIモデルをダウンロード中... ${pct}%`, pct * 0.25);
+          } else if (p.status === 'loading') {
+            setStatus('AIモデルを読み込み中...', 25);
+          }
+        }
+      }
+    );
+  }
+
+  async function start(file) {
+    hide(uploadView);
+    show(processingView);
+    hide(errorText);
+    hide(liveLabel);
+    hide(liveText);
+    liveText.textContent = '';
+
+    try {
+      await loadModel();
+      const audio = await extractAudio(file);
+
+      setStatus('文字起こし中...', 35);
+      show(liveLabel);
+      show(liveText);
+
+      let accumulated = '';
+
+      const result = await transcriber(audio, {
+        language: 'japanese',
+        task: 'transcribe',
+        chunk_length_s: 30,
+        stride_length_s: 5,
+        callback_function(beams) {
+          const partial = beams[0]?.output_token_ids ? '' : (beams[0]?.text ?? '');
+          if (partial) {
+            liveText.textContent = accumulated + partial;
+          }
+        },
+        chunk_callback(chunk) {
+          accumulated += chunk.text;
+          liveText.textContent = accumulated;
+          setStatus('文字起こし中...', Math.min(35 + Math.round(accumulated.length / 5), 90));
+        }
+      });
+
+      setStatus('完了！', 100);
+
+      setTimeout(() => {
+        hide(processingView);
+        resultText.textContent = result.text.trim();
+        show(resultView);
+      }, 400);
+
+    } catch (err) {
+      console.error(err);
+      setStatus('エラーが発生しました', 0);
+      show(errorText);
+      errorText.textContent = 'エラー: ' + err.message;
+    }
+  }
+</script>
+</body>
+</html>
