@@ -234,18 +234,20 @@
   async function loadModel() {
     if (transcriber) return;
 
-    setStatus('AIモデルを読み込み中... (初回は数分かかります)', 0);
+    setStatus('AIモデルをダウンロード中... (初回のみ・数分かかります) 0%', 1);
 
     transcriber = await pipeline(
       'automatic-speech-recognition',
-      'Xenova/whisper-small',
+      'Xenova/whisper-tiny',
       {
         progress_callback(p) {
           if (p.status === 'downloading') {
             const pct = Math.round(p.progress ?? 0);
-            setStatus(`AIモデルをダウンロード中... ${pct}%`, pct * 0.25);
+            setStatus(`AIモデルをダウンロード中... ${pct}%`, pct * 0.3);
           } else if (p.status === 'loading') {
-            setStatus('AIモデルを読み込み中...', 25);
+            setStatus('AIモデルを起動中...', 30);
+          } else if (p.status === 'ready') {
+            setStatus('準備完了', 32);
           }
         }
       }
@@ -255,6 +257,7 @@
   async function start(file) {
     hide(uploadView);
     show(processingView);
+    setStatus('ファイルを受け取りました...', 1);
     hide(errorText);
     hide(liveLabel);
     hide(liveText);
