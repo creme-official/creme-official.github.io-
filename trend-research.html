@@ -418,12 +418,17 @@
         <button class="filter-btn" data-v="today 12-m">1年</button>
       </div>
 
-      <button class="btn-search" id="trendsBtn" style="width:100%">グラフを更新</button>
+      <button class="btn-search" id="trendsBtn" style="width:100%">Google Trendsで比較を開く</button>
+      <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">
+        ※ 選んだキーワードをGoogleトレンドで比較します（新しいタブで開きます）
+      </p>
     </div>
 
     <div class="panel" id="trendsResult">
       <div class="state-box" style="padding:30px">
-        <div class="state-text">上のキーワードを選んで「グラフを更新」を押してください</div>
+        <div class="state-icon">📈</div>
+        <div class="state-text">キーワードを選んでボタンを押してください</div>
+        <div class="state-sub">最大5つのキーワードの検索トレンドをGoogleトレンドで比較できます</div>
       </div>
     </div>
   </div>
@@ -672,15 +677,23 @@ document.getElementById('trendsBtn').addEventListener('click', () => {
 });
 
 function loadTrends(keywords, period) {
-  const comparisonItem = keywords.map(kw => ({ keyword: kw, geo: 'JP', time: period }));
-  const req = encodeURIComponent(JSON.stringify({ comparisonItem, category: 44, property: '' }));
-  const exploreQuery = encodeURIComponent(`cat=44&geo=JP&q=${keywords.map(encodeURIComponent).join(',')}&date=${period}`);
-  const src = `https://trends.google.com/trends/embed/explore/TIMESERIES?req=${req}&tz=-540&hl=ja&exploreQuery=${exploreQuery}&guestPath=https://trends.google.com:443/trends/embed/`;
-  document.getElementById('trendsResult').innerHTML =
-    `<div class="trends-frame-wrap"><iframe src="${src}" scrolling="no"></iframe></div>
-     <p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:right">
-       ※ Google Trendsのデータ。数値は相対的な検索量です
-     </p>`;
+  const periodLabel = { 'now 7-d': '過去7日間', 'today 1-m': '過去1ヶ月', 'today 3-m': '過去3ヶ月', 'today 12-m': '過去1年' };
+  const url = `https://trends.google.com/trends/explore?cat=44&geo=JP&q=${keywords.map(encodeURIComponent).join(',')}&date=${encodeURIComponent(period)}&hl=ja`;
+
+  const chips = keywords.map(kw =>
+    `<span style="display:inline-block;padding:4px 12px;background:var(--brand);color:white;border-radius:100px;font-size:13px">${esc(kw)}</span>`
+  ).join('');
+
+  document.getElementById('trendsResult').innerHTML = `
+    <div style="text-align:center;padding:24px 16px">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">比較するキーワード（${periodLabel[period] || period}）</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:24px">${chips}</div>
+      <a href="${url}" target="_blank" rel="noopener noreferrer"
+         style="display:inline-block;padding:12px 32px;background:var(--brand);color:white;border-radius:8px;text-decoration:none;font-size:15px;font-weight:bold">
+        Google Trendsでグラフを見る →
+      </a>
+      <p style="font-size:11px;color:var(--muted);margin-top:14px">新しいタブでGoogleトレンドが開きます</p>
+    </div>`;
 }
 
 /* ══════════════════════════════════
@@ -714,20 +727,16 @@ document.getElementById('mediaFetchBtn').addEventListener('click', async () => {
 });
 
 async function fetchRSS(name, url) {
-  const proxy = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
-  const res = await fetch(proxy);
+  const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=8`;
+  const res = await fetch(api);
   const data = await res.json();
-  if (!data.contents) return [];
-  const doc = new DOMParser().parseFromString(data.contents, 'text/xml');
-  const items = [...doc.querySelectorAll('item')];
-  return items.slice(0, 8).map(item => ({
+  if (data.status !== 'ok' || !data.items?.length) return [];
+  return data.items.map(item => ({
     source: name,
-    title:  item.querySelector('title')?.textContent?.trim() || '',
-    link:   item.querySelector('link')?.textContent?.trim() || '',
-    date:   item.querySelector('pubDate')?.textContent?.trim() || '',
-    image:  item.querySelector('enclosure')?.getAttribute('url')
-         || item.querySelector('content\\:encoded,encoded')?.textContent?.match(/src="([^"]+\.(jpg|jpeg|png|webp))"/i)?.[1]
-         || ''
+    title:  item.title || '',
+    link:   item.link  || '',
+    date:   item.pubDate || '',
+    image:  item.thumbnail || item.enclosure?.link || ''
   })).filter(a => a.title && a.link);
 }
 
