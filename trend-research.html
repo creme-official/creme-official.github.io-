@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美容コンテンツリサーチ | Creme</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #9f8a60;
+      --brand-dark: #8a7650;
+      --bg: #f0ede8;
+      --white: #ffffff;
+      --text: #333333;
+      --muted: #888888;
+      --border: #e8e3dc;
+    }
+
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+    .header-title { font-size: 17px; font-weight: bold; color: var(--brand); }
+    .header-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .btn-settings {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 14px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .btn-settings:hover { background: var(--bg); }
+
+    /* ── Main ── */
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+
+    /* ── Search Panel ── */
+    .search-panel {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .section-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    /* カテゴリチップ */
+    .category-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .chip {
+      padding: 6px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text);
+      font-family: inherit;
+    }
+    .chip:hover  { border-color: var(--brand); color: var(--brand); }
+    .chip.active { background: var(--brand); border-color: var(--brand); color: white; }
+
+    /* 検索バー */
+    .search-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .search-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--brand); }
+
+    /* フィルター */
+    .filters {
+      display: flex;
+      gap: 20px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+    .filter-group { display: flex; gap: 4px; }
+    .filter-btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--white);
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--muted);
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover  { border-color: var(--brand); color: var(--brand); }
+    .filter-btn.active { background: var(--brand); border-color: var(--brand); color: white; }
+
+    /* 検索ボタン */
+    .btn-search {
+      padding: 10px 24px;
+      background: var(--brand);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-search:hover    { background: var(--brand-dark); }
+    .btn-search:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* ── Results ── */
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .results-count { font-size: 13px; color: var(--muted); }
+    .results-link  { font-size: 12px; color: var(--brand); text-decoration: none; }
+    .results-link:hover { text-decoration: underline; }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 16px;
+    }
+
+    /* 動画カード */
+    .video-card {
+      background: var(--white);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .video-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.11);
+    }
+
+    .thumb-wrap {
+      position: relative;
+      padding-top: 56.25%;
+      background: #eee;
+      overflow: hidden;
+    }
+    .thumb-wrap img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video-info   { padding: 12px; }
+    .video-title  {
+      font-size: 13px;
+      font-weight: bold;
+      line-height: 1.45;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .video-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .views-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #fff8f0;
+      border: 1px solid #f0e0c0;
+      border-radius: 100px;
+      font-size: 11px;
+      color: var(--brand);
+      font-weight: bold;
+    }
+
+    /* ── State containers ── */
+    .state-box {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .state-icon { font-size: 40px; margin-bottom: 12px; }
+    .state-text { font-size: 15px; }
+    .state-sub  { font-size: 13px; margin-top: 6px; }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Settings Modal ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--white);
+      border-radius: 12px;
+      padding: 28px;
+      width: 90%;
+      max-width: 420px;
+    }
+    .modal-title { font-size: 16px; font-weight: bold; margin-bottom: 6px; }
+    .modal-desc  { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
+
+    .modal label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .modal input[type="text"],
+    .modal input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      margin-bottom: 6px;
+      outline: none;
+    }
+    .modal input:focus { border-color: var(--brand); }
+    .modal-note {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .btn-cancel {
+      padding: 9px 18px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: none;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-save {
+      padding: 9px 18px;
+      background: var(--brand);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-save:hover { background: var(--brand-dark); }
+
+    @media (max-width: 600px) {
+      .search-row { flex-wrap: wrap; }
+      .results-grid { grid-template-columns: 1fr; }
+      .filters { gap: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div>
+    <div class="header-title">美容コンテンツリサーチ</div>
+    <div class="header-sub">YouTube トレンド調査ツール</div>
+  </div>
+  <button class="btn-settings" id="settingsBtn">⚙ APIキー設定</button>
+</div>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- 検索パネル -->
+  <div class="search-panel">
+
+    <div class="section-label">カテゴリ</div>
+    <div class="category-chips" id="categoryChips">
+      <button class="chip" data-q="スキンケア おすすめ">スキンケア</button>
+      <button class="chip" data-q="メイク やり方 コスメ">メイク</button>
+      <button class="chip" data-q="ヘアケア おすすめ">ヘアケア</button>
+      <button class="chip" data-q="ネイル デザイン">ネイル</button>
+      <button class="chip" data-q="ボディケア おすすめ">ボディケア</button>
+      <button class="chip" data-q="韓国コスメ おすすめ">韓国コスメ</button>
+      <button class="chip" data-q="プチプラコスメ おすすめ">プチプラ</button>
+      <button class="chip" data-q="デパコス 新作 おすすめ">デパコス</button>
+      <button class="chip" data-q="日焼け止め おすすめ">日焼け止め</button>
+      <button class="chip" data-q="美容皮膚科 おすすめ">美容皮膚科</button>
+      <button class="chip" data-q="保湿 スキンケア">保湿</button>
+      <button class="chip" data-q="毛穴 ケア おすすめ">毛穴ケア</button>
+    </div>
+
+    <div class="search-row">
+      <input class="search-input" id="searchInput" type="text"
+             placeholder="キーワードを入力（例：美白 美容液 おすすめ）">
+      <button class="btn-search" id="searchBtn">検索</button>
+    </div>
+
+    <div class="filters">
+      <div>
+        <div class="section-label" style="margin-bottom:6px">期間</div>
+        <div class="filter-group" id="periodGroup">
+          <button class="filter-btn active" data-v="week">今週</button>
+          <button class="filter-btn" data-v="month">今月</button>
+          <button class="filter-btn" data-v="3months">3ヶ月</button>
+          <button class="filter-btn" data-v="all">全期間</button>
+        </div>
+      </div>
+      <div>
+        <div class="section-label" style="margin-bottom:6px">並び順</div>
+        <div class="filter-group" id="sortGroup">
+          <button class="filter-btn active" data-v="viewCount">再生数順</button>
+          <button class="filter-btn" data-v="date">新着順</button>
+          <button class="filter-btn" data-v="relevance">関連度</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 結果エリア -->
+  <div id="resultsArea">
+    <div class="state-box">
+      <div class="state-icon">🔍</div>
+      <div class="state-text">カテゴリを選ぶかキーワードを入力して検索</div>
+      <div class="state-sub">YouTubeの美容動画を再生数・新着で絞り込めます</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Settings Modal ── -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-title">YouTube API キー設定</div>
+    <div class="modal-desc">
+      Google Cloud Console で発行した YouTube Data API v3 のキーを入力してください。<br>
+      キーはこのブラウザにのみ保存され、外部には一切送信されません。
+    </div>
+    <label>API キー</label>
+    <input type="password" id="apiKeyInput" placeholder="AIza...">
+    <div class="modal-note">
+      取得方法：Google Cloud Console → APIとサービス → ライブラリ → YouTube Data API v3 → 有効化<br>
+      → 認証情報 → APIキーを作成
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="cancelBtn">キャンセル</button>
+      <button class="btn-save"   id="saveBtn">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = 'creme_yt_api_key';
+
+  let period = 'week';
+  let sort   = 'viewCount';
+
+  /* ── Settings modal ── */
+  const overlay    = document.getElementById('overlay');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const cancelBtn  = document.getElementById('cancelBtn');
+  const saveBtn    = document.getElementById('saveBtn');
+
+  settingsBtn.addEventListener('click', () => {
+    const saved = localStorage.getItem(STORAGE_KEY) || '';
+    apiKeyInput.value = saved ? '●'.repeat(8) + saved.slice(-4) : '';
+    overlay.classList.add('open');
+    if (!saved) apiKeyInput.value = '';
+  });
+
+  cancelBtn.addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+
+  saveBtn.addEventListener('click', () => {
+    const val = apiKeyInput.value.trim();
+    if (val && !val.startsWith('●')) localStorage.setItem(STORAGE_KEY, val);
+    overlay.classList.remove('open');
+  });
+
+  /* ── Category chips ── */
+  document.getElementById('categoryChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    document.getElementById('searchInput').value = '';
+    doSearch(chip.dataset.q);
+  });
+
+  /* ── Period filter ── */
+  document.getElementById('periodGroup').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('#periodGroup .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    period = btn.dataset.v;
+  });
+
+  /* ── Sort filter ── */
+  document.getElementById('sortGroup').addEventListener('click', e => {
+    const btn = e.target.closest('.filter-btn');
+    if (!btn) return;
+    document.querySelectorAll('#sortGroup .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    sort = btn.dataset.v;
+  });
+
+  /* ── Search button ── */
+  const searchBtn   = document.getElementById('searchBtn');
+  const searchInput = document.getElementById('searchInput');
+
+  searchBtn.addEventListener('click', () => {
+    const q = searchInput.value.trim();
+    if (!q) return;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    doSearch(q);
+  });
+  searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchBtn.click(); });
+
+  /* ── Core search ── */
+  async function doSearch(query) {
+    const apiKey = localStorage.getItem(STORAGE_KEY);
+    if (!apiKey) {
+      showState('⚙', 'APIキーが設定されていません', '右上の「APIキー設定」から設定してください');
+      overlay.classList.add('open');
+      apiKeyInput.value = '';
+      return;
+    }
+    showLoading();
+    try {
+      const videos = await fetchVideos(query, period, sort, apiKey);
+      renderResults(videos, query);
+    } catch (err) {
+      showState('⚠️', 'エラーが発生しました', err.message);
+    }
+  }
+
+  async function fetchVideos(query, period, sort, apiKey) {
+    /* publishedAfter を計算 */
+    let publishedAfter = '';
+    if (period !== 'all') {
+      const d = new Date();
+      if      (period === 'week')   d.setDate(d.getDate() - 7);
+      else if (period === 'month')  d.setMonth(d.getMonth() - 1);
+      else if (period === '3months') d.setMonth(d.getMonth() - 3);
+      publishedAfter = d.toISOString();
+    }
+
+    /* search */
+    const sp = new URLSearchParams({
+      part: 'snippet', q: query, type: 'video',
+      order: sort, regionCode: 'JP', relevanceLanguage: 'ja',
+      maxResults: '20', key: apiKey,
+      ...(publishedAfter && { publishedAfter })
+    });
+    const sr = await fetch('https://www.googleapis.com/youtube/v3/search?' + sp);
+    const sd = await sr.json();
+    if (sd.error) throw new Error(sd.error.message);
+    if (!sd.items?.length) return [];
+
+    const ids = sd.items.map(i => i.id.videoId).filter(Boolean).join(',');
+    if (!ids) return [];
+
+    /* statistics */
+    const vp = new URLSearchParams({
+      part: 'statistics,snippet', id: ids, key: apiKey
+    });
+    const vr = await fetch('https://www.googleapis.com/youtube/v3/videos?' + vp);
+    const vd = await vr.json();
+    if (vd.error) throw new Error(vd.error.message);
+    return vd.items || [];
+  }
+
+  /* ── Render ── */
+  function renderResults(videos, query) {
+    const area = document.getElementById('resultsArea');
+    if (!videos.length) {
+      showState('😶', `「${esc(query)}」の動画が見つかりませんでした`, '期間を広げるかキーワードを変えてみてください');
+      return;
+    }
+
+    const cards = videos.map(v => {
+      const title   = esc(v.snippet.title);
+      const channel = esc(v.snippet.channelTitle);
+      const thumb   = v.snippet.thumbnails?.medium?.url || '';
+      const views   = fmt(v.statistics?.viewCount);
+      const likes   = fmt(v.statistics?.likeCount);
+      const date    = relDate(v.snippet.publishedAt);
+      const url     = `https://www.youtube.com/watch?v=${v.id}`;
+
+      return `
+        <a class="video-card" href="${url}" target="_blank" rel="noopener noreferrer">
+          <div class="thumb-wrap">
+            <img src="${thumb}" alt="${title}" loading="lazy">
+          </div>
+          <div class="video-info">
+            <div class="video-title">${title}</div>
+            <div class="video-meta">
+              <span class="views-badge">▶ ${views}回</span>
+              ${likes !== '—' ? `<span>♥ ${likes}</span>` : ''}
+              <span>${channel}</span>
+              <span>${date}</span>
+            </div>
+          </div>
+        </a>`;
+    }).join('');
+
+    const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    area.innerHTML = `
+      <div class="results-header">
+        <div class="results-count">「${esc(query)}」の結果 ${videos.length}件</div>
+        <a class="results-link" href="${ytUrl}" target="_blank" rel="noopener noreferrer">YouTubeで全件表示 →</a>
+      </div>
+      <div class="results-grid">${cards}</div>`;
+  }
+
+  function showLoading() {
+    document.getElementById('resultsArea').innerHTML = `
+      <div class="state-box">
+        <div class="spinner"></div>
+        <div class="state-text">検索中...</div>
+      </div>`;
+  }
+
+  function showState(icon, text, sub) {
+    document.getElementById('resultsArea').innerHTML = `
+      <div class="state-box">
+        <div class="state-icon">${icon}</div>
+        <div class="state-text">${esc(text)}</div>
+        <div class="state-sub">${esc(sub)}</div>
+      </div>`;
+  }
+
+  /* ── Helpers ── */
+  function fmt(n) {
+    if (!n) return '—';
+    const num = parseInt(n, 10);
+    if (num >= 100000000) return Math.floor(num / 100000000) + '億';
+    if (num >= 10000)     return (num / 10000).toFixed(1).replace(/\.0$/, '') + '万';
+    if (num >= 1000)      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return num.toLocaleString();
+  }
+
+  function relDate(iso) {
+    const diff = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (diff < 86400)        return '今日';
+    if (diff < 86400 * 7)   return Math.floor(diff / 86400) + '日前';
+    if (diff < 86400 * 30)  return Math.floor(diff / (86400 * 7)) + '週間前';
+    if (diff < 86400 * 365) return Math.floor(diff / (86400 * 30)) + 'ヶ月前';
+    return Math.floor(diff / (86400 * 365)) + '年前';
+  }
+
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* APIキー未設定なら初回表示時にモーダルを開く */
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    setTimeout(() => { overlay.classList.add('open'); }, 400);
+  }
+</script>
+</body>
+</html>
