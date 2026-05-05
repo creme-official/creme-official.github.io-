@@ -394,10 +394,16 @@
   <div id="tab-trends" class="tab-content">
 
     <div class="panel">
-      <div class="section-label">キーワードを選ぶ（最大5つ比較）</div>
+      <div class="section-label">比較するキーワード（最大5つ）</div>
+
+      <div class="search-row" style="margin-bottom:12px">
+        <input class="search-input" id="trendsInput" type="text" placeholder="キーワードを入力してEnter（例：セラム、毛穴パテ）">
+        <button class="btn-search" id="trendsAddBtn">追加</button>
+      </div>
+
       <div class="chips" id="trendsChips">
-        <button class="chip active" data-kw="スキンケア">スキンケア</button>
-        <button class="chip active" data-kw="メイク">メイク</button>
+        <button class="chip active" data-kw="スキンケア">スキンケア ✕</button>
+        <button class="chip active" data-kw="メイク">メイク ✕</button>
         <button class="chip" data-kw="ヘアケア">ヘアケア</button>
         <button class="chip" data-kw="日焼け止め">日焼け止め</button>
         <button class="chip" data-kw="保湿クリーム">保湿クリーム</button>
@@ -409,6 +415,7 @@
         <button class="chip" data-kw="乾燥肌">乾燥肌</button>
         <button class="chip" data-kw="美容液">美容液</button>
       </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px">選択中のキーワードをタップで解除 / 未選択をタップで追加（最大5つ）</p>
 
       <div class="section-label">期間</div>
       <div class="trends-period" id="trendsPeriod">
@@ -418,9 +425,9 @@
         <button class="filter-btn" data-v="today 12-m">1年</button>
       </div>
 
-      <button class="btn-search" id="trendsBtn" style="width:100%">Google Trendsで比較を開く</button>
+      <button class="btn-search" id="trendsBtn" style="width:100%;margin-top:4px">Google Trendsで比較を開く</button>
       <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">
-        ※ 選んだキーワードをGoogleトレンドで比較します（新しいタブで開きます）
+        新しいタブでGoogleトレンドが開きます
       </p>
     </div>
 
@@ -428,34 +435,41 @@
       <div class="state-box" style="padding:30px">
         <div class="state-icon">📈</div>
         <div class="state-text">キーワードを選んでボタンを押してください</div>
-        <div class="state-sub">最大5つのキーワードの検索トレンドをGoogleトレンドで比較できます</div>
       </div>
     </div>
   </div>
 
   <!-- ══════════════════════════════════
-       Tab 3: 美容メディア
+       Tab 3: 美容ニュース
   ══════════════════════════════════ -->
   <div id="tab-media" class="tab-content">
 
     <div class="panel">
-      <div class="section-label">メディアを選ぶ（複数選択可）</div>
-      <div class="media-sources" id="mediaSources">
-        <button class="source-chip active" data-name="VOCE"    data-url="https://voce.hpplus.jp/feed/">VOCE</button>
-        <button class="source-chip active" data-name="美的"    data-url="https://www.biteki.com/feed">美的</button>
-        <button class="source-chip active" data-name="Oggi"    data-url="https://oggi.hpplus.jp/feed/">Oggi</button>
-        <button class="source-chip active" data-name="Domani"  data-url="https://domani.shogakukan.co.jp/feed/">Domani</button>
-        <button class="source-chip active" data-name="CLASSY"  data-url="https://classy-online.jp/feed/">CLASSY</button>
-        <button class="source-chip active" data-name="eclat"   data-url="https://eclat.hpplus.jp/feed/">eclat</button>
+      <div class="section-label">カテゴリ</div>
+      <div class="chips" id="mediaChips">
+        <button class="chip" data-q="スキンケア コスメ">スキンケア</button>
+        <button class="chip" data-q="メイク コスメ">メイク</button>
+        <button class="chip" data-q="ヘアケア">ヘアケア</button>
+        <button class="chip" data-q="日焼け止め">日焼け止め</button>
+        <button class="chip" data-q="韓国コスメ">韓国コスメ</button>
+        <button class="chip" data-q="美容 新作コスメ">新作コスメ</button>
+        <button class="chip" data-q="美容 トレンド">トレンド</button>
+        <button class="chip" data-q="美白 美容液">美白</button>
+        <button class="chip" data-q="ネイル">ネイル</button>
+        <button class="chip" data-q="美容皮膚科">美容皮膚科</button>
       </div>
-      <button class="btn-search" id="mediaFetchBtn" style="width:100%">最新記事を取得</button>
+
+      <div class="search-row">
+        <input class="search-input" id="mediaInput" type="text" placeholder="キーワードを入力（例：保湿クリーム おすすめ）">
+        <button class="btn-search" id="mediaSearchBtn">検索</button>
+      </div>
     </div>
 
     <div id="mediaResults">
       <div class="state-box">
         <div class="state-icon">📰</div>
-        <div class="state-text">「最新記事を取得」を押してください</div>
-        <div class="state-sub">美容メディアの最新記事をまとめて表示します</div>
+        <div class="state-text">カテゴリかキーワードで美容ニュースを検索</div>
+        <div class="state-sub">Googleニュースから最新の美容記事を取得します</div>
       </div>
     </div>
   </div>
@@ -668,6 +682,39 @@ document.getElementById('trendsChips').addEventListener('click', e => {
   if (chip.classList.contains('active') && activeChips.length <= 1) return;
   if (!chip.classList.contains('active') && activeChips.length >= 5) return;
   chip.classList.toggle('active');
+  updateChipLabels();
+});
+
+function updateChipLabels() {
+  document.querySelectorAll('#trendsChips .chip').forEach(chip => {
+    const kw = chip.dataset.kw;
+    chip.textContent = chip.classList.contains('active') ? kw + ' ✕' : kw;
+  });
+}
+
+function trendsAddKeyword(kw) {
+  if (!kw) return;
+  const existing = document.querySelector(`#trendsChips .chip[data-kw="${CSS.escape(kw)}"]`);
+  if (existing) {
+    const active = document.querySelectorAll('#trendsChips .chip.active');
+    if (active.length < 5) { existing.classList.add('active'); updateChipLabels(); }
+    return;
+  }
+  if (document.querySelectorAll('#trendsChips .chip.active').length >= 5) return;
+  const btn = document.createElement('button');
+  btn.className = 'chip active';
+  btn.dataset.kw = kw;
+  btn.textContent = kw + ' ✕';
+  document.getElementById('trendsChips').appendChild(btn);
+}
+
+document.getElementById('trendsAddBtn').addEventListener('click', () => {
+  const input = document.getElementById('trendsInput');
+  trendsAddKeyword(input.value.trim());
+  input.value = '';
+});
+document.getElementById('trendsInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('trendsAddBtn').click();
 });
 
 document.getElementById('trendsBtn').addEventListener('click', () => {
@@ -679,11 +726,9 @@ document.getElementById('trendsBtn').addEventListener('click', () => {
 function loadTrends(keywords, period) {
   const periodLabel = { 'now 7-d': '過去7日間', 'today 1-m': '過去1ヶ月', 'today 3-m': '過去3ヶ月', 'today 12-m': '過去1年' };
   const url = `https://trends.google.com/trends/explore?cat=44&geo=JP&q=${keywords.map(encodeURIComponent).join(',')}&date=${encodeURIComponent(period)}&hl=ja`;
-
   const chips = keywords.map(kw =>
     `<span style="display:inline-block;padding:4px 12px;background:var(--brand);color:white;border-radius:100px;font-size:13px">${esc(kw)}</span>`
   ).join('');
-
   document.getElementById('trendsResult').innerHTML = `
     <div style="text-align:center;padding:24px 16px">
       <p style="font-size:12px;color:var(--muted);margin-bottom:14px">比較するキーワード（${periodLabel[period] || period}）</p>
@@ -697,53 +742,54 @@ function loadTrends(keywords, period) {
 }
 
 /* ══════════════════════════════════
-   Tab 3: 美容メディア RSS
+   Tab 3: 美容ニュース（Googleニュース）
 ══════════════════════════════════ */
-document.getElementById('mediaSources').addEventListener('click', e => {
-  const chip = e.target.closest('.source-chip');
+document.getElementById('mediaChips').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
   if (!chip) return;
-  chip.classList.toggle('active');
+  document.querySelectorAll('#mediaChips .chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  document.getElementById('mediaInput').value = '';
+  fetchNews(chip.dataset.q);
 });
 
-document.getElementById('mediaFetchBtn').addEventListener('click', async () => {
-  const active = [...document.querySelectorAll('.source-chip.active')];
-  if (!active.length) {
-    document.getElementById('mediaResults').innerHTML =
-      '<div class="state-box"><div class="state-icon">💡</div><div class="state-text">メディアを1つ以上選んでください</div></div>';
-    return;
-  }
+document.getElementById('mediaSearchBtn').addEventListener('click', () => {
+  const q = document.getElementById('mediaInput').value.trim();
+  if (!q) return;
+  document.querySelectorAll('#mediaChips .chip').forEach(c => c.classList.remove('active'));
+  fetchNews(q);
+});
+document.getElementById('mediaInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('mediaSearchBtn').click();
+});
+
+async function fetchNews(query) {
   document.getElementById('mediaResults').innerHTML =
     '<div class="state-box"><div class="spinner"></div><div class="state-text">記事を取得中...</div></div>';
-
-  const results = await Promise.allSettled(
-    active.map(chip => fetchRSS(chip.dataset.name, chip.dataset.url))
-  );
-
-  const articles = results
-    .flatMap(r => r.status === 'fulfilled' ? r.value : [])
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  renderArticles(articles);
-});
-
-async function fetchRSS(name, url) {
-  const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=8`;
-  const res = await fetch(api);
-  const data = await res.json();
-  if (data.status !== 'ok' || !data.items?.length) return [];
-  return data.items.map(item => ({
-    source: name,
-    title:  item.title || '',
-    link:   item.link  || '',
-    date:   item.pubDate || '',
-    image:  item.thumbnail || item.enclosure?.link || ''
-  })).filter(a => a.title && a.link);
+  try {
+    const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ja&gl=JP&ceid=JP:ja`;
+    const api = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(rssUrl)}&count=20`;
+    const res = await fetch(api);
+    const data = await res.json();
+    if (data.status !== 'ok' || !data.items?.length) throw new Error('記事が見つかりませんでした');
+    const articles = data.items.map(item => ({
+      source: (item.title.match(/ - (.+)$/) || [])[1] || item.author || '',
+      title:  item.title.replace(/ - .+$/, '').trim(),
+      link:   item.link,
+      date:   item.pubDate,
+      image:  item.thumbnail || ''
+    }));
+    renderArticles(articles, query);
+  } catch (err) {
+    document.getElementById('mediaResults').innerHTML =
+      `<div class="state-box"><div class="state-icon">⚠️</div><div class="state-text">${esc(err.message)}</div><div class="state-sub">キーワードを変えてもう一度試してください</div></div>`;
+  }
 }
 
-function renderArticles(articles) {
+function renderArticles(articles, query) {
   const area = document.getElementById('mediaResults');
   if (!articles.length) {
-    area.innerHTML = '<div class="state-box"><div class="state-icon">😶</div><div class="state-text">記事を取得できませんでした</div><div class="state-sub">時間をおいて再試行してください</div></div>';
+    area.innerHTML = '<div class="state-box"><div class="state-icon">😶</div><div class="state-text">記事が見つかりませんでした</div><div class="state-sub">キーワードを変えてみてください</div></div>';
     return;
   }
   const cards = articles.map(a => {
@@ -762,7 +808,7 @@ function renderArticles(articles) {
   }).join('');
   area.innerHTML = `
     <div class="results-header">
-      <div class="results-count">${articles.length}件の記事</div>
+      <div class="results-count">${query ? `「${esc(query)}」` : ''}の記事 ${articles.length}件</div>
     </div>
     <div class="articles-grid">${cards}</div>`;
 }
